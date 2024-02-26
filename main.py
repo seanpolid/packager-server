@@ -26,9 +26,7 @@ def package():
 
 	copy_folder_to_container(container, host_repo_path, repo_path, name)
 
-	return {
-		"packagePath": package_path
-	}
+	return f"Path: {package_path}"
 
 def get_request_attrs(json):
 	try:
@@ -83,9 +81,13 @@ def package_application(path):
 	if app_type == AppType.CSHARP:
 		completed_process = subprocess.run(['dotnet', 'publish'], shell=True, cwd=path)
 	elif app_type == AppType.JAVA:
-		completed_process = subprocess.run(['mvn', 'package'], shell=True, cwd=path)
+		completed_process = subprocess.run(['mvn', 'package', '-DskipTests'], shell=True, cwd=path)
 	elif app_type == AppType.ELECTRON:
-		completed_process = subprocess.run(['npm run', 'package'], shell=True, cwd=path)
+		completed_process = subprocess.run(['npm', 'install'], shell=True, cwd=path)
+		if completed_process.returncode != 0:
+			abort(Response("Could not install dependencies.")) 
+
+		completed_process = subprocess.run(['npm', 'run', 'package'], shell=True, cwd=path)
 	else:
 		abort(Response("Could not package application. Please ensure the project is one of the supporting types: \
 		\n\t- C-SHARP\n\t-JAVA\n\t-ELECTRON"))
@@ -124,6 +126,20 @@ def get_app_type(files):
 def get_package_path(app_type, path):
 	if app_type == AppType.CSHARP:
 		return 'bin/Debug/net6.0/publish'
+	elif app_type == AppType.JAVA:
+		return get_java_package_path(path)
+	elif app_type == AppType.ELECTRON:
+		folder = os.listdir(f'{path}/out')[0]
+		return f'out/{folder}'
+
+def get_java_package_path(path):
+	if 'shade' in os.listdir(path):
+		file = [file for file in os.listdir(f'{path}/shade') if '.jar' in file][0]
+		return f'shade/{file}'
+	else:
+		file = [file for file in os.listdir(f'{path}/target') if '.jar' in file][0]
+		return f'target/{file}'
+
 
 def copy_folder_to_container(container, host_path, container_path, name):
 	tar_file = f'{WORKDIR}/{name}.tar'
