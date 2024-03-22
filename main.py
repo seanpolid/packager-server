@@ -28,6 +28,10 @@ def package():
 
 	return f"Path: {package_path}"
 
+@app.route("/test")
+def test():
+	return "test"
+
 def get_request_attrs(json):
 	try:
 		return [json['containerName'], json['repoPath']]
@@ -78,7 +82,9 @@ def package_application(path):
 		abort(Response("Could not determine the type of project. Please ensure the repository is a valid programming project."))
 
 	completed_process = None
-	if app_type == AppType.CSHARP:
+	if 'package.sh' in files:
+		completed_process = subprocess.run(['./package.sh'])
+	elif app_type == AppType.CSHARP:
 		completed_process = subprocess.run(['dotnet', 'publish'], shell=True, cwd=path)
 	elif app_type == AppType.JAVA:
 		completed_process = subprocess.run(['mvn', 'package', '-DskipTests'], shell=True, cwd=path)
