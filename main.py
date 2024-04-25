@@ -88,7 +88,7 @@ def package_application(path):
 
 	completed_process = None
 	if 'package.sh' in files:
-		completed_process = subprocess.run(['./package.sh'])
+		completed_process = subprocess.run(['package.sh'], shell=True, cwd=path)
 	elif app_type == AppType.CSHARP:
 		completed_process = subprocess.run(['dotnet', 'publish'], shell=True, cwd=path)
 	elif app_type == AppType.JAVA:
