@@ -3,9 +3,12 @@ from enums import AppType
 from flask import Flask 
 from flask import request, abort
 import os
+import stat
 from werkzeug.wrappers.response import Response
 import tarfile
 import subprocess 
+import shutil as s
+from git import rmtree
 
 app = Flask(__name__)
 
@@ -25,6 +28,8 @@ def package():
 	package_path = f'{repo_path}{package_path}' if repo_path[-1:] == '/' else f'{repo_path}/{package_path}'
 
 	copy_folder_to_container(container, host_repo_path, repo_path, name)
+
+	cleanup(host_repo_path, tar_path)
 
 	return f"Path: {package_path}"
 
@@ -133,7 +138,7 @@ def get_package_path(app_type, path):
 	if app_type == AppType.CSHARP:
 		return 'bin/Debug/net6.0/publish'
 	elif app_type == AppType.JAVA:
-		return get_java_package_path(path)
+		return 'shade'
 	elif app_type == AppType.ELECTRON:
 		folder = os.listdir(f'{path}/out')[0]
 		return f'out/{folder}'
@@ -157,3 +162,7 @@ def copy_folder_to_container(container, host_path, container_path, name):
 	with open(tar_file, 'rb') as f:
 		data = f.read()
 		container.put_archive(container_path, data)
+
+def cleanup(host_repo_path, tar_path):
+	rmtree(host_repo_path)			# Folder needs to be deleted for new updates to show up in build
+	os.remove(tar_path)
