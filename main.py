@@ -87,8 +87,9 @@ def package_application(path):
 		abort(Response("Could not determine the type of project. Please ensure the repository is a valid programming project."))
 
 	completed_process = None
+
 	if 'package.sh' in files:
-		completed_process = subprocess.run(['package.sh'], shell=True, cwd=path)
+		completed_process = subprocess.run(['bash', 'package.sh'], shell=True, cwd=path)
 	elif app_type == AppType.CSHARP:
 		completed_process = subprocess.run(['dotnet', 'publish'], shell=True, cwd=path)
 	elif app_type == AppType.JAVA:
